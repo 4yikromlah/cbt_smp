@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Refresh Token | CBT System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', system-ui, sans-serif; background: #eef0f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .card { background: #eef0f5; border-radius: 48px; padding: 2rem; width: 500px; text-align: center; box-shadow: 20px 20px 40px #bebebe, -10px -10px 20px #ffffff; }
+        .token-list { background: #2d2a4a; color: #eef0f5; padding: 1rem; border-radius: 24px; text-align: left; margin: 1rem 0; font-family: monospace; }
+        .btn { background: linear-gradient(145deg, #7d64a8, #5a3e7c); color: white; border: none; padding: 10px 28px; border-radius: 60px; cursor: pointer; margin-top: 1rem; }
+        select, button { margin: 10px 0; padding: 10px; border-radius: 60px; border: none; background: #eef0f5; box-shadow: inset 2px 2px 5px #bebebe, inset -2px -2px 5px #ffffff; width: 100%; }
+        .back-link { display: inline-block; margin-top: 1rem; color: #7d64a8; text-decoration: none; }
+    </style>
+    <script src="cbt.js"></script>
+</head>
+<body>
+<div class="card">
+    <h2><i class="fas fa-sync-alt"></i> Refresh Token Ujian</h2>
+    <p>Generate token baru untuk ujian yang sedang aktif</p>
+    <select id="pilihUjian">
+        <option value="">Pilih Ujian Aktif</option>
+    </select>
+    <button class="btn" onclick="refreshToken()"><i class="fas fa-sync-alt"></i> Generate Token Baru</button>
+    <div class="token-list" id="tokenResult">
+        <strong>Token saat ini:</strong><br>
+        --
+    </div>
+    <a href="index.html" class="back-link">← Kembali ke Dashboard</a>
+</div>
+<script>
+    function loadUjianAktif() {
+        const ujian = getUjian().filter(u => u.status === 'aktif');
+        const select = document.getElementById('pilihUjian');
+        select.innerHTML = '<option value="">Pilih Ujian Aktif</option>';
+        ujian.forEach(u => {
+            select.innerHTML += `<option value="${u.id}">${u.nama_ujian}</option>`;
+        });
+        if(ujian.length > 0) {
+            select.value = ujian[0].id;
+            showCurrentToken(ujian[0].id);
+        }
+    }
+    function showCurrentToken(idUjian) {
+        const tokens = getData('token_ujian');
+        const token = tokens.find(t => t.id_ujian === idUjian && t.is_active);
+        document.getElementById('tokenResult').innerHTML = `<strong>Token saat ini:</strong><br>${token ? token.token : 'Belum ada token'}`;
+    }
+    function generateRandomToken() {
+        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        let token = '';
+        for(let i=0; i<4; i++) token += chars[Math.floor(Math.random() * chars.length)];
+        return token;
+    }
+    function refreshToken() {
+        const idUjian = document.getElementById('pilihUjian').value;
+        if(!idUjian) { alert('Pilih ujian terlebih dahulu'); return; }
+        const newToken = generateRandomToken();
+        let tokens = getData('token_ujian');
+        // Nonaktifkan token lama untuk ujian ini
+        tokens = tokens.map(t => {
+            if(t.id_ujian === parseInt(idUjian)) return { ...t, is_active: false };
+            return t;
+        });
+        // Tambah token baru
+        const newId = getNextId('token_ujian');
+        tokens.push({
+            id: newId,
+            id_ujian: parseInt(idUjian),
+            token: newToken,
+            is_active: true,
+            expires_at: new Date(Date.now() + 86400000).toISOString()
+        });
+        saveData('token_ujian', tokens);
+        showCurrentToken(idUjian);
+        alert(`Token baru: ${newToken}`);
+    }
+    loadUjianAktif();
+    document.getElementById('pilihUjian').addEventListener('change', function() {
+        if(this.value) showCurrentToken(this.value);
+    });
+</script>
+</body>
+</html>

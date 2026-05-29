@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kelola Soal | CBT System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', system-ui, sans-serif; background: #eef0f5; padding: 0 0 2rem 0; display: flex; justify-content: center; }
+        .main-wrapper { width: 90%; max-width: 1200px; margin: 0 auto; margin-top: 4px; }
+        .top-header { display: flex; justify-content: space-between; align-items: center; background: #eef0f5; border-radius: 60px; padding: 0.8rem 2rem; margin-bottom: 2rem; box-shadow: 12px 12px 24px #bebebe, -8px -8px 18px #ffffff; }
+        .logo-area .brand { display: flex; align-items: center; gap: 12px; }
+        .cbt-logo { font-size: 2.2rem; background: linear-gradient(145deg, #7c5e9a, #4a3b6e); background-clip: text; -webkit-background-clip: text; color: transparent; }
+        .brand h2 { font-size: 1.4rem; font-weight: 700; color: #3c2e5a; }
+        .brand p { font-size: 0.7rem; font-weight: 500; color: #7d6b9e; }
+        .admin-area { display: flex; align-items: center; gap: 20px; }
+        .logout-btn { background: linear-gradient(145deg, #e2e6ec, #f0f4fa); padding: 8px 20px; border-radius: 40px; text-decoration: none; color: #5a3a7a; box-shadow: 8px 8px 16px #bebebe, -4px -4px 8px #ffffff; }
+        .nav-bar { display: flex; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 10px; }
+        .btn-back, .btn-tambah { display: inline-flex; align-items: center; gap: 8px; padding: 0.6rem 1.5rem; border-radius: 40px; text-decoration: none; font-weight: 600; background: #eef0f5; color: #4a3570; box-shadow: 6px 6px 12px #bebebe, -4px -4px 8px #ffffff; }
+        .btn-tambah { background: linear-gradient(145deg, #10b981, #059669); color: white; }
+        .btn-delete { background: #eef0f5; padding: 5px 12px; border-radius: 40px; color: #ef4444; border: none; cursor: pointer; box-shadow: 4px 4px 8px #bebebe, -2px -2px 4px #ffffff; }
+        .btn-edit { background: #eef0f5; padding: 5px 12px; border-radius: 40px; color: #3b82f6; border: none; cursor: pointer; box-shadow: 4px 4px 8px #bebebe, -2px -2px 4px #ffffff; }
+        .soal-card { background: #eef0f5; border-radius: 28px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 12px 12px 24px #bebebe, -8px -8px 18px #ffffff; }
+        .soal-header { display: flex; justify-content: space-between; margin-bottom: 1rem; }
+        .soal-tag { background: linear-gradient(135deg, #8b5cf6, #7c3aed); color: white; padding: 4px 12px; border-radius: 40px; font-size: 0.7rem; }
+        .soal-poin { background: #fef3c7; color: #d97706; padding: 4px 12px; border-radius: 40px; font-size: 0.7rem; }
+        .soal-pertanyaan { font-weight: 600; margin-bottom: 1rem; }
+        .soal-pilihan-list { margin-left: 1rem; margin-bottom: 1rem; }
+        .soal-jawaban { background: #10b981; color: white; display: inline-block; padding: 4px 12px; border-radius: 40px; font-size: 0.7rem; }
+        .modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); justify-content: center; align-items: center; z-index: 1000; }
+        .modal.active { display: flex; }
+        .modal-content { background: #eef0f5; border-radius: 48px; padding: 2rem; width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; margin: 5px 0; border: none; background: #eef0f5; border-radius: 60px; box-shadow: inset 3px 3px 6px #bebebe, inset -2px -2px 4px #ffffff; outline: none; }
+        .radio-group { display: flex; gap: 15px; flex-wrap: wrap; margin: 10px 0; }
+        .btn-submit { background: linear-gradient(145deg, #7d64a8, #5a3e7c); color: white; border: none; padding: 10px; border-radius: 60px; width: 100%; font-weight: bold; cursor: pointer; margin-top: 1rem; }
+        .close-modal { float: right; font-size: 1.5rem; cursor: pointer; }
+        .jenis-soal-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 1rem; }
+        .jenis-card { background: #eef0f5; border-radius: 20px; padding: 0.5rem; text-align: center; cursor: pointer; box-shadow: 6px 6px 12px #bebebe, -4px -4px 8px #ffffff; }
+        .jenis-card.selected { border: 2px solid #10b981; background: rgba(16,185,129,0.1); }
+        @media (max-width: 860px) { .jenis-soal-grid { grid-template-columns: repeat(2,1fr); } }
+    </style>
+    <script src="cbt.js"></script>
+</head>
+<body>
+<div class="main-wrapper">
+    <div class="top-header">
+        <div class="logo-area"><div class="brand"><span class="cbt-logo">📚</span><div><h2>CBT System</h2><p>SMP MAARIF TEGALAMPEL</p></div></div></div>
+        <div class="admin-area"><a href="logout.html" class="logout-btn">Keluar</a></div>
+    </div>
+    <div class="nav-bar">
+        <a href="ujian.html" class="btn-back">← Kembali ke Ujian</a>
+        <button class="btn-tambah" onclick="openModal()">+ Tambah Soal</button>
+    </div>
+    <div class="page-title"><h1 id="judulUjian">Kelola Soal</h1></div>
+    <div id="soalContainer"></div>
+</div>
+
+<div id="modalSoal" class="modal">
+    <div class="modal-content">
+        <span class="close-modal" onclick="closeModal()">&times;</span>
+        <h3 id="modalTitle">Tambah Soal</h3>
+        <input type="hidden" id="editId">
+        <div class="jenis-soal-grid" id="jenisGrid">
+            <div class="jenis-card" data-jenis="pilihan_ganda" onclick="pilihJenis('pilihan_ganda')">Pilihan Ganda</div>
+            <div class="jenis-card" data-jenis="pilihan_ganda_komplek" onclick="pilihJenis('pilihan_ganda_komplek')">PG Komplek</div>
+            <div class="jenis-card" data-jenis="menjodohkan" onclick="pilihJenis('menjodohkan')">Menjodohkan</div>
+            <div class="jenis-card" data-jenis="essay" onclick="pilihJenis('essay')">Essay</div>
+            <div class="jenis-card" data-jenis="benar_salah" onclick="pilihJenis('benar_salah')">Benar/Salah</div>
+        </div>
+        <input type="hidden" id="jenisSoal" value="pilihan_ganda">
+        <div class="form-group"><textarea id="pertanyaan" rows="3" placeholder="Pertanyaan"></textarea></div>
+        
+        <div id="formPG" class="form-soal">
+            <div class="form-group"><input type="text" id="pilihan_a" placeholder="Pilihan A"></div>
+            <div class="form-group"><input type="text" id="pilihan_b" placeholder="Pilihan B"></div>
+            <div class="form-group"><input type="text" id="pilihan_c" placeholder="Pilihan C"></div>
+            <div class="form-group"><input type="text" id="pilihan_d" placeholder="Pilihan D"></div>
+            <div class="form-group">Jawaban Benar: <select id="jawaban_pg"><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option></select></div>
+        </div>
+        <div id="formPGKomplek" class="form-soal" style="display:none;">
+            <div class="form-group"><input type="text" id="komplek_a" placeholder="Pilihan A"></div>
+            <div class="form-group"><input type="text" id="komplek_b" placeholder="Pilihan B"></div>
+            <div class="form-group"><input type="text" id="komplek_c" placeholder="Pilihan C"></div>
+            <div class="form-group"><input type="text" id="komplek_d" placeholder="Pilihan D"></div>
+            <div class="form-group">Jawaban Benar (centang): <div class="radio-group"><label><input type="checkbox" value="A"> A</label><label><input type="checkbox" value="B"> B</label><label><input type="checkbox" value="C"> C</label><label><input type="checkbox" value="D"> D</label></div></div>
+        </div>
+        <div id="formMenjodohkan" class="form-soal" style="display:none;">
+            <div id="pasanganContainer"><div class="pasangan-item" style="display:flex; gap:10px; margin-bottom:10px;"><input type="text" placeholder="Pernyataan" id="pernyataan1"><input type="text" placeholder="Pasangan" id="pasangan1"></div></div>
+            <button type="button" onclick="tambahPasangan()">+ Tambah Pasangan</button>
+        </div>
+        <div id="formEssay" class="form-soal" style="display:none;"><p class="form-group">Essay akan dinilai manual oleh guru.</p></div>
+        <div id="formBenarSalah" class="form-soal" style="display:none;"><div class="radio-group"><label><input type="radio" name="bs" value="true"> Benar</label><label><input type="radio" name="bs" value="false"> Salah</label></div></div>
+        
+        <div class="form-group"><label>Poin:</label><input type="number" id="poin" value="1" min="1"></div>
+        <button class="btn-submit" onclick="simpanSoal()">Simpan Soal</button>
+    </div>
+</div>
+
+<script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const idUjian = parseInt(urlParams.get('id'));
+    let currentJenis = 'pilihan_ganda';
+    let pasanganCount = 1;
+
+    function loadUjianInfo() {
+        const ujian = getUjian().find(u => u.id === idUjian);
+        if(ujian) {
+            document.getElementById('judulUjian').innerHTML = `Kelola Soal - ${ujian.nama_ujian}`;
+        }
+    }
+    function renderSoal() {
+        const soalList = getSoal(idUjian);
+        const container = document.getElementById('soalContainer');
+        container.innerHTML = '';
+        if(soalList.length === 0) {
+            container.innerHTML = '<div class="soal-card" style="text-align:center">Belum ada soal. Klik Tambah Soal.</div>';
+            return;
+        }
+        soalList.forEach((s, idx) => {
+            const card = document.createElement('div');
+            card.className = 'soal-card';
+            let jawabanDisplay = '';
+            if(s.jenis_soal === 'pilihan_ganda') {
+                const pilihan = JSON.parse(s.pilihan_json || '{}');
+                jawabanDisplay = `Jawaban: ${s.jawaban_json}`;
+            } else if(s.jenis_soal === 'benar_salah') {
+                jawabanDisplay = `Jawaban: ${s.jawaban_json === 'true' ? 'Benar' : 'Salah'}`;
+            } else if(s.jenis_soal === 'essay') {
+                jawabanDisplay = 'Essay (dinilai manual)';
+            } else if(s.jenis_soal === 'menjodohkan') {
+                jawabanDisplay = 'Menjodohkan';
+            } else if(s.jenis_soal === 'pilihan_ganda_komplek') {
+                jawabanDisplay = `Jawaban: ${s.jawaban_json}`;
+            }
+            card.innerHTML = `
+                <div class="soal-header"><span class="soal-tag">${idx+1} ${s.jenis_soal.replace('_',' ')}</span><span class="soal-poin">${s.poin} poin</span></div>
+                <div class="soal-pertanyaan">${s.pertanyaan}</div>
+                <div class="soal-jawaban">${jawabanDisplay}</div>
+                <div style="margin-top:1rem; text-align:right">
+                    <button class="btn-edit" onclick="editSoal(${s.id})">Edit</button>
+                    <button class="btn-delete" onclick="hapusSoal(${s.id})">Hapus</button>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+    }
+    function openModal() {
+        document.getElementById('modalTitle').innerText = 'Tambah Soal';
+        document.getElementById('editId').value = '';
+        document.getElementById('pertanyaan').value = '';
+        document.getElementById('poin').value = 1;
+        pilihJenis('pilihan_ganda');
+        document.getElementById('modalSoal').classList.add('active');
+    }
+    function closeModal() { document.getElementById('modalSoal').classList.remove('active'); }
+    function pilihJenis(jenis) {
+        currentJenis = jenis;
+        document.getElementById('jenisSoal').value = jenis;
+        document.querySelectorAll('.jenis-card').forEach(c => c.classList.remove('selected'));
+        document.querySelector(`.jenis-card[data-jenis="${jenis}"]`).classList.add('selected');
+        document.querySelectorAll('.form-soal').forEach(f => f.style.display = 'none');
+        if(jenis === 'pilihan_ganda') document.getElementById('formPG').style.display = 'block';
+        else if(jenis === 'pilihan_ganda_komplek') document.getElementById('formPGKomplek').style.display = 'block';
+        else if(jenis === 'menjodohkan') document.getElementById('formMenjodohkan').style.display = 'block';
+        else if(jenis === 'essay') document.getElementById('formEssay').style.display = 'block';
+        else if(jenis === 'benar_salah') document.getElementById('formBenarSalah').style.display = 'block';
+    }
+    function tambahPasangan() {
+        pasanganCount++;
+        const container = document.getElementById('pasanganContainer');
+        const div = document.createElement('div');
+        div.className = 'pasangan-item';
+        div.style.cssText = 'display:flex; gap:10px; margin-bottom:10px;';
+        div.innerHTML = `<input type="text" placeholder="Pernyataan" id="pernyataan${pasanganCount}"><input type="text" placeholder="Pasangan" id="pasangan${pasanganCount}"><button type="button" onclick="this.parentElement.remove()">Hapus</button>`;
+        container.appendChild(div);
+    }
+    function simpanSoal() {
+        const pertanyaan = document.getElementById('pertanyaan').value;
+        const poin = document.getElementById('poin').value;
+        if(!pertanyaan) { alert('Pertanyaan wajib diisi'); return; }
+        let pilihan_json = null;
+        let jawaban_json = null;
+        if(currentJenis === 'pilihan_ganda') {
+            const a = document.getElementById('pilihan_a').value;
+            const b = document.getElementById('pilihan_b').value;
+            const c = document.getElementById('pilihan_c').value;
+            const d = document.getElementById('pilihan_d').value;
+            if(!a || !b || !c || !d) { alert('Isi semua pilihan'); return; }
+            pilihan_json = JSON.stringify({A:a, B:b, C:c, D:d});
+            jawaban_json = document.getElementById('jawaban_pg').value;
+        } else if(currentJenis === 'benar_salah') {
+            jawaban_json = document.querySelector('input[name="bs"]:checked')?.value;
+            if(!jawaban_json) { alert('Pilih jawaban'); return; }
+        } else if(currentJenis === 'pilihan_ganda_komplek') {
+            const a = document.getElementById('komplek_a').value;
+            const b = document.getElementById('komplek_b').value;
+            const c = document.getElementById('komplek_c').value;
+            const d = document.getElementById('komplek_d').value;
+            if(!a || !b || !c || !d) { alert('Isi semua pilihan'); return; }
+            pilihan_json = JSON.stringify({A:a, B:b, C:c, D:d});
+            const checks = Array.from(document.querySelectorAll('#formPGKomplek input[type="checkbox"]:checked')).map(cb => cb.value);
+            if(checks.length === 0) { alert('Pilih minimal satu jawaban benar'); return; }
+            jawaban_json = JSON.stringify(checks);
+        } else if(currentJenis === 'menjodohkan') {
+            const pairs = [];
+            for(let i=1; i<=pasanganCount; i++) {
+                const pernyataan = document.getElementById(`pernyataan${i}`)?.value;
+                const pasangan = document.getElementById(`pasangan${i}`)?.value;
+                if(pernyataan && pasangan) pairs.push({pernyataan, pasangan});
+            }
+            if(pairs.length === 0) { alert('Tambahkan minimal satu pasangan'); return; }
+            pilihan_json = JSON.stringify({pairs});
+            jawaban_json = JSON.stringify({matches: pairs.map((p,idx) => ({pernyataan: idx+1, pasangan: p.pasangan}))});
+        } else if(currentJenis === 'essay') {
+            jawaban_json = null;
+        }
+        const editId = document.getElementById('editId').value;
+        if(editId) {
+            updateSoal(parseInt(editId), { pertanyaan, poin: parseInt(poin), pilihan_json, jawaban_json });
+        } else {
+            addSoal(idUjian, currentJenis, pertanyaan, poin, pilihan_json, jawaban_json);
+        }
+        closeModal();
+        renderSoal();
+    }
+    function editSoal(id) {
+        const soal = getData('soal').find(s => s.id === id);
+        if(soal) {
+            document.getElementById('modalTitle').innerText = 'Edit Soal';
+            document.getElementById('editId').value = soal.id;
+            document.getElementById('pertanyaan').value = soal.pertanyaan;
+            document.getElementById('poin').value = soal.poin;
+            pilihJenis(soal.jenis_soal);
+            if(soal.jenis_soal === 'pilihan_ganda' && soal.pilihan_json) {
+                const p = JSON.parse(soal.pilihan_json);
+                document.getElementById('pilihan_a').value = p.A || '';
+                document.getElementById('pilihan_b').value = p.B || '';
+                document.getElementById('pilihan_c').value = p.C || '';
+                document.getElementById('pilihan_d').value = p.D || '';
+                document.getElementById('jawaban_pg').value = soal.jawaban_json;
+            } else if(soal.jenis_soal === 'pilihan_ganda_komplek' && soal.pilihan_json) {
+                const p = JSON.parse(soal.pilihan_json);
+                document.getElementById('komplek_a').value = p.A || '';
+                document.getElementById('komplek_b').value = p.B || '';
+                document.getElementById('komplek_c').value = p.C || '';
+                document.getElementById('komplek_d').value = p.D || '';
+                const jawaban = JSON.parse(soal.jawaban_json);
+                document.querySelectorAll('#formPGKomplek input[type="checkbox"]').forEach(cb => { cb.checked = jawaban.includes(cb.value); });
+            } else if(soal.jenis_soal === 'benar_salah') {
+                const val = soal.jawaban_json === 'true';
+                document.querySelector(`input[name="bs"][value="${val}"]`).checked = true;
+            } else if(soal.jenis_soal === 'menjodohkan' && soal.pilihan_json) {
+                const pairs = JSON.parse(soal.pilihan_json).pairs;
+                const container = document.getElementById('pasanganContainer');
+                container.innerHTML = '';
+                pasanganCount = pairs.length;
+                pairs.forEach((p, idx) => {
+                    const div = document.createElement('div');
+                    div.className = 'pasangan-item';
+                    div.style.cssText = 'display:flex; gap:10px; margin-bottom:10px;';
+                    div.innerHTML = `<input type="text" placeholder="Pernyataan" value="${p.pernyataan}" id="pernyataan${idx+1}"><input type="text" placeholder="Pasangan" value="${p.pasangan}" id="pasangan${idx+1}"><button type="button" onclick="this.parentElement.remove()">Hapus</button>`;
+                    container.appendChild(div);
+                });
+            }
+            document.getElementById('modalSoal').classList.add('active');
+        }
+    }
+    function hapusSoal(id) {
+        if(confirm('Yakin hapus soal ini?')) {
+            deleteSoal(id);
+            renderSoal();
+        }
+    }
+    if(!idUjian) window.location.href = 'ujian.html';
+    loadUjianInfo();
+    renderSoal();
+</script>
+</body>
+</html>

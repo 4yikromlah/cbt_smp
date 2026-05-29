@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rekap Nilai | CBT System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', system-ui, sans-serif; background: #eef0f5; padding: 0 0 2rem 0; display: flex; justify-content: center; }
+        .main-wrapper { width: 90%; max-width: 1200px; margin: 0 auto; margin-top: 4px; }
+        .top-header { display: flex; justify-content: space-between; align-items: center; background: #eef0f5; border-radius: 60px; padding: 0.8rem 2rem; margin-bottom: 2rem; box-shadow: 12px 12px 24px #bebebe, -8px -8px 18px #ffffff; }
+        .logo-area .brand { display: flex; align-items: center; gap: 12px; }
+        .cbt-logo { font-size: 2.2rem; background: linear-gradient(145deg, #7c5e9a, #4a3b6e); background-clip: text; -webkit-background-clip: text; color: transparent; }
+        .brand h2 { font-size: 1.4rem; font-weight: 700; color: #3c2e5a; }
+        .brand p { font-size: 0.7rem; font-weight: 500; color: #7d6b9e; }
+        .admin-area { display: flex; align-items: center; gap: 20px; }
+        .logout-btn { background: linear-gradient(145deg, #e2e6ec, #f0f4fa); padding: 8px 20px; border-radius: 40px; text-decoration: none; color: #5a3a7a; box-shadow: 8px 8px 16px #bebebe, -4px -4px 8px #ffffff; }
+        .nav-bar { margin-bottom: 1.5rem; }
+        .btn-back { display: inline-flex; align-items: center; gap: 8px; padding: 0.6rem 1.5rem; border-radius: 40px; text-decoration: none; font-weight: 600; background: #eef0f5; color: #4a3570; box-shadow: 6px 6px 12px #bebebe, -4px -4px 8px #ffffff; }
+        .filter-card { background: rgba(248,244,255,0.65); border-radius: 32px; padding: 1.5rem; margin-bottom: 2rem; }
+        .filter-form { display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end; }
+        .filter-group { flex: 1; min-width: 150px; }
+        .filter-group select { width: 100%; padding: 10px; border: none; background: #eef0f5; border-radius: 60px; box-shadow: inset 2px 2px 5px #bebebe, inset -2px -2px 5px #ffffff; }
+        .btn-filter, .btn-reset, .btn-export { background: linear-gradient(145deg, #7d64a8, #5a3e7c); color: white; border: none; padding: 10px 20px; border-radius: 60px; cursor: pointer; }
+        .btn-reset { background: #eef0f5; color: #4a3570; }
+        .btn-export { background: linear-gradient(145deg, #10b981, #059669); }
+        .info-cards { display: grid; grid-template-columns: repeat(3,1fr); gap: 24px; margin-bottom: 2rem; }
+        .info-card { background: #eef0f5; border-radius: 28px; padding: 1.5rem; text-align: center; box-shadow: 12px 12px 24px #bebebe, -8px -8px 18px #ffffff; }
+        .table-card { background: rgba(248,244,255,0.65); border-radius: 32px; padding: 1.5rem; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid rgba(128,100,162,0.15); }
+        .badge { background: #eef0f5; padding: 4px 10px; border-radius: 40px; font-size: 0.7rem; }
+        .nilai-bagus { background: #10b981; color: white; }
+        .nilai-sedang { background: #f59e0b; color: white; }
+        .nilai-kurang { background: #ef4444; color: white; }
+    </style>
+    <script src="cbt.js"></script>
+</head>
+<body>
+<div class="main-wrapper">
+    <div class="top-header">
+        <div class="logo-area"><div class="brand"><span class="cbt-logo">📚</span><div><h2>CBT System</h2><p>SMP MAARIF TEGALAMPEL</p></div></div></div>
+        <div class="admin-area"><a href="logout.html" class="logout-btn">Keluar</a></div>
+    </div>
+    <div class="nav-bar">
+        <a href="index.html" class="btn-back">← Kembali</a>
+    </div>
+    <div class="page-title"><h1>Rekap Nilai Siswa</h1></div>
+    <div class="filter-card">
+        <div class="filter-form">
+            <div class="filter-group"><label>Filter Kelas</label><select id="filterKelas"><option value="">Semua Kelas</option></select></div>
+            <div class="filter-group"><label>Filter Mapel</label><select id="filterMapel"><option value="">Semua Mapel</option></select></div>
+            <div class="filter-group"><button class="btn-filter" onclick="filterData()">Filter</button></div>
+            <div class="filter-group"><button class="btn-reset" onclick="resetFilter()">Reset</button></div>
+            <div class="filter-group"><button class="btn-export" onclick="exportToExcel()">Export Excel</button></div>
+        </div>
+    </div>
+    <div class="info-cards" id="infoCards"></div>
+    <div class="table-card">
+        <table id="tabelRekap">
+            <thead><tr><th>No</th><th>Kelas</th><th>NIS</th><th>Nama Siswa</th><th>Mata Pelajaran</th><th>Rata-Rata</th><th>Total Ujian</th></tr></thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+<script>
+    let allData = [];
+    function loadData() {
+        const siswaList = getSiswa();
+        const nilaiList = getNilai();
+        const mapelList = getMapel();
+        // Group by siswa + mapel
+        const grouped = new Map();
+        nilaiList.forEach(n => {
+            const siswa = siswaList.find(s => s.id === n.id_siswa);
+            if(!siswa) return;
+            const ujian = getUjian().find(u => u.id === n.id_ujian);
+            if(!ujian) return;
+            const mapel = mapelList.find(m => m.id === ujian.id_mapel);
+            const key = `${siswa.id}_${mapel.id}`;
+            if(!grouped.has(key)) {
+                grouped.set(key, { siswa, mapel: mapel.nama_mapel, totalNilai: 0, count: 0, kelas: getNamaKelasById(siswa.id_kelas), nis: siswa.nis, nama: siswa.nama_lengkap });
+            }
+            const g = grouped.get(key);
+            g.totalNilai += n.nilai_total;
+            g.count++;
+        });
+        allData = Array.from(grouped.values()).map(g => ({
+            kelas: g.kelas,
+            nis: g.nis,
+            nama: g.nama,
+            mapel: g.mapel,
+            rata: (g.totalNilai / g.count).toFixed(1),
+            totalUjian: g.count
+        }));
+        populateFilters();
+        renderTable(allData);
+        updateInfoCards();
+    }
+    function populateFilters() {
+        const kelasSet = new Set(allData.map(d => d.kelas));
+        const mapelSet = new Set(allData.map(d => d.mapel));
+        const kelasSelect = document.getElementById('filterKelas');
+        const mapelSelect = document.getElementById('filterMapel');
+        kelasSelect.innerHTML = '<option value="">Semua Kelas</option>' + Array.from(kelasSet).map(k => `<option value="${k}">${k}</option>`).join('');
+        mapelSelect.innerHTML = '<option value="">Semua Mapel</option>' + Array.from(mapelSet).map(m => `<option value="${m}">${m}</option>`).join('');
+    }
+    function filterData() {
+        const kelas = document.getElementById('filterKelas').value;
+        const mapel = document.getElementById('filterMapel').value;
+        let filtered = allData;
+        if(kelas) filtered = filtered.filter(d => d.kelas === kelas);
+        if(mapel) filtered = filtered.filter(d => d.mapel === mapel);
+        renderTable(filtered);
+        updateInfoCards(filtered);
+    }
+    function resetFilter() {
+        document.getElementById('filterKelas').value = '';
+        document.getElementById('filterMapel').value = '';
+        renderTable(allData);
+        updateInfoCards(allData);
+    }
+    function renderTable(data) {
+        const tbody = document.querySelector('#tabelRekap tbody');
+        tbody.innerHTML = '';
+        data.forEach((d, i) => {
+            let kelasNilai = '';
+            if(d.rata >= 85) kelasNilai = 'nilai-bagus';
+            else if(d.rata >= 70) kelasNilai = 'nilai-sedang';
+            else kelasNilai = 'nilai-kurang';
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${i+1}</td>
+                <td><span class="badge">${d.kelas}</span></td>
+                <td>${d.nis}</td>
+                <td>${d.nama}</td>
+                <td>${d.mapel}</td>
+                <td><span class="badge ${kelasNilai}">${d.rata}</span></td>
+                <td>${d.totalUjian} ujian</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+    function updateInfoCards(data = allData) {
+        const rata = data.length ? (data.reduce((a,b) => a + parseFloat(b.rata), 0) / data.length).toFixed(1) : 0;
+        const totalData = data.length;
+        const kelasSet = new Set(data.map(d => d.kelas));
+        document.getElementById('infoCards').innerHTML = `
+            <div class="info-card"><div class="info-value">${rata}%</div><div class="info-label">RATA-RATA</div></div>
+            <div class="info-card"><div class="info-value">${totalData}</div><div class="info-label">DATA REKAP</div></div>
+            <div class="info-card"><div class="info-value">${kelasSet.size}</div><div class="info-label">KELAS</div></div>
+        `;
+    }
+    function exportToExcel() {
+        let html = document.getElementById('tabelRekap').outerHTML;
+        let blob = new Blob([html], {type: 'application/vnd.ms-excel'});
+        let link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'rekap_nilai.xls';
+        link.click();
+    }
+    loadData();
+</script>
+</body>
+</html>

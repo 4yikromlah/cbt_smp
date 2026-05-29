@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detail Ujian | Guru CBT</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', system-ui, sans-serif; background: #eef0f5; padding: 0 0 2rem 0; display: flex; justify-content: center; }
+        .main-wrapper { width: 90%; max-width: 1200px; margin: 0 auto; margin-top: 4px; }
+        .top-header { display: flex; justify-content: space-between; align-items: center; background: #eef0f5; border-radius: 60px; padding: 0.8rem 2rem; margin-bottom: 2rem; box-shadow: 12px 12px 24px #bebebe, -8px -8px 18px #ffffff; }
+        .logo-area .brand { display: flex; align-items: center; gap: 12px; }
+        .cbt-logo { font-size: 2.2rem; background: linear-gradient(145deg, #7c5e9a, #4a3b6e); background-clip: text; -webkit-background-clip: text; color: transparent; }
+        .brand h2 { font-size: 1.4rem; font-weight: 700; color: #3c2e5a; }
+        .brand p { font-size: 0.7rem; font-weight: 500; color: #7d6b9e; }
+        .admin-area { display: flex; align-items: center; gap: 20px; }
+        .logout-btn { background: linear-gradient(145deg, #e2e6ec, #f0f4fa); padding: 8px 20px; border-radius: 40px; text-decoration: none; color: #5a3a7a; box-shadow: 8px 8px 16px #bebebe, -4px -4px 8px #ffffff; }
+        .btn-back { display: inline-flex; align-items: center; gap: 8px; background: #eef0f5; padding: 0.6rem 1.5rem; border-radius: 40px; text-decoration: none; color: #4a3570; margin-bottom: 1rem; box-shadow: 6px 6px 12px #bebebe, -4px -4px 8px #ffffff; }
+        .card { background: #eef0f5; border-radius: 32px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 12px 12px 24px #bebebe, -8px -8px 18px #ffffff; }
+        .table-card { background: rgba(248,244,255,0.65); border-radius: 32px; padding: 1.5rem; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid rgba(128,100,162,0.15); }
+        .nilai-bagus { background: #10b981; color: white; padding: 4px 10px; border-radius: 40px; display: inline-block; }
+        .nilai-sedang { background: #f59e0b; color: white; padding: 4px 10px; border-radius: 40px; display: inline-block; }
+        .nilai-kurang { background: #ef4444; color: white; padding: 4px 10px; border-radius: 40px; display: inline-block; }
+    </style>
+    <script src="cbt.js"></script>
+</head>
+<body>
+<div class="main-wrapper">
+    <div class="top-header">
+        <div class="logo-area"><div class="brand"><span class="cbt-logo">📚</span><div><h2>CBT System</h2><p>SMP MAARIF TEGALAMPEL</p></div></div></div>
+        <div class="admin-area"><a href="logout_guru.html" class="logout-btn">Keluar</a></div>
+    </div>
+    <a href="dashboard_guru.html" class="btn-back">← Kembali</a>
+    <div id="infoUjian" class="card"></div>
+    <div class="table-card">
+        <h3>Daftar Nilai Siswa</h3>
+        <table id="tabelNilai">
+            <thead><tr><th>No</th><th>NIS</th><th>Nama</th><th>Kelas</th><th>Nilai</th><th>Waktu Selesai</th></tr></thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+<script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const idUjian = parseInt(urlParams.get('id'));
+    function render() {
+        if(!idUjian) { window.location.href = 'dashboard_guru.html'; return; }
+        const ujian = getUjian().find(u => u.id === idUjian);
+        if(!ujian) { document.getElementById('infoUjian').innerHTML = '<p>Ujian tidak ditemukan.</p>'; return; }
+        document.getElementById('infoUjian').innerHTML = `
+            <h1><i class="fas fa-file-alt"></i> ${ujian.nama_ujian}</h1>
+            <p><strong>Mata Pelajaran:</strong> ${getNamaMapelById(ujian.id_mapel)}</p>
+            <p><strong>Waktu:</strong> ${ujian.tanggal_mulai.replace('T',' ')} - ${ujian.tanggal_akhir.replace('T',' ')}</p>
+            <p><strong>Durasi:</strong> ${ujian.durasi_menit} menit</p>
+        `;
+        const nilaiList = getNilai().filter(n => n.id_ujian === idUjian);
+        const tbody = document.querySelector('#tabelNilai tbody');
+        tbody.innerHTML = '';
+        nilaiList.forEach((n, i) => {
+            const siswa = getSiswa().find(s => s.id === n.id_siswa);
+            if(!siswa) return;
+            let kelasNilai = '';
+            if(n.nilai_total >= 85) kelasNilai = 'nilai-bagus';
+            else if(n.nilai_total >= 70) kelasNilai = 'nilai-sedang';
+            else kelasNilai = 'nilai-kurang';
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${i+1}</td>
+                <td>${siswa.nis}</td>
+                <td>${siswa.nama_lengkap}</td>
+                <td>${getNamaKelasById(siswa.id_kelas)}</td>
+                <td><span class="${kelasNilai}">${n.nilai_total}</span></td>
+                <td>${n.selesai_pada || '-'}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+        if(nilaiList.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center">Belum ada siswa yang menyelesaikan ujian ini.</td></tr>';
+        }
+    }
+    render();
+</script>
+</body>
+</html>

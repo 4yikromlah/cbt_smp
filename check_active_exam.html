@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Check Active Exam - API</title>
+    <style>
+        body { font-family: monospace; background: #eef0f5; padding: 2rem; }
+        pre { background: #2d2a4a; color: #eef0f5; padding: 1rem; border-radius: 16px; }
+    </style>
+    <script src="cbt.js"></script>
+</head>
+<body>
+    <h3>Endpoint: check_active_exam.php (simulasi)</h3>
+    <p>Response JSON dari sistem:</p>
+    <pre id="result">Loading...</pre>
+    <p><small>Endpoint ini mengembalikan status ujian aktif dari database lokal.</small></p>
+    <script>
+        const ujianAktif = getUjian().filter(u => u.status === 'aktif');
+        const hasActive = ujianAktif.length > 0;
+        document.getElementById('result').innerHTML = JSON.stringify({ has_active: hasActive, active_exams: ujianAktif.map(u => ({ id: u.id, name: u.nama_ujain })) }, null, 2);
+    </script>
+</body>
+</html>
